@@ -1,0 +1,69 @@
+// colors
+
+// blue
+$color-blue-dark: #002842;
+$color-blue-light: #00aeff;
+
+// gray
+$color-gray-super-dark: rgb(20, 20, 24);
+$color-gray-dark: #535353;
+$color-gray: #bdbdbd;
+$color-gray-light: rgb(218, 218, 218);
+
+// W&B
+$color-black: #000;
+$color-white: #fff;
+
+// red
+$color-red-light: rgb(206, 6, 39);
+
+// fonts
+$small-font: 1.6rem;
+$normal-font: 2.4rem;
+$large-font: 4rem;
+
+// times
+$little-time: 0.3s;
+$normal-time: 0.5s;
+$long-time: 1s;
+
+// gaps
+$small-gap: 1.6rem;
+$normal-gap: 2.4rem;
+$large-gap: 4rem;
+
+:root {
+    // ========= colors =========
+
+    // blue
+    --color-blue-dark: $color-blue-dark;
+    --color-blue-light: $color-blue-light;
+
+    // gray
+    --color-gray-super-dark: $color-gray-super-dark;
+    --color-gray-dark: $color-gray-dark;
+    --color-gray: $color-gray;
+    --color-gray-light: $color-gray-light;
+
+    // W&B
+    --color-black: $color-black;
+    --color-white: $color-white;
+
+    // red
+    --color-red-light: $color-red-light;
+
+    // ========= fonts =========
+    --small-font: $small-font;
+    --normal-font: $normal-font;
+    --large-font: $large-font;
+
+    // ========= times =========
+    --little-time: $little-time;
+    --normal-time: $normal-time;
+    --long-time: $long-time;
+
+    // ========= gaps =========
+    --small-gap: $small-gap;
+    --normal-gap: $normal-gap;
+    --large-gap: $large-gap;
+}

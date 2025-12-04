@@ -1,0 +1,39 @@
+.modal_pop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+
+    width: 100vw;
+    height: 100vh;
+
+    backdrop-filter: blur(4px) grayscale(100%);
+    opacity: 0;
+    visibility: hidden;
+
+    transition: opacity 0.3s;
+
+    .container {
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+
+        transition: all 0.5s ease-in-out;
+    }
+
+    .modal_content {
+        margin: 15vh auto;
+        max-width: fit-content;
+
+        transform: scale(0.4);
+        transition: all 0.7s;
+    }
+}
+
+.modal--visible {
+    opacity: 1;
+    visibility: visible;
+    .modal_content {
+        transform: scale(1);
+    }
+}

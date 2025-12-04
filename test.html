@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Webpage Fetch</title>
+</head>
+
+<body>
+
+    <h1>Instagram Webpage Fetch</h1>
+
+    <script>
+        const url = 'https://www.instagram.com/instagram/';
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Process the HTML as needed
+                console.log(html);
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,28 @@
+.search_bar {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: start;
+
+    width: 100%;
+    gap: 2rem;
+
+    align-content: center;
+    align-items: center;
+
+    margin: 0 auto;
+    z-index: 100000;
+}
+
+.filter_bar {
+    width: 100%;
+    display: flex;
+    gap: 2rem;
+
+    justify-content: center;
+}
