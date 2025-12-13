@@ -11,7 +11,9 @@ export default async function handler(req, res) {
       lat
     )}&lon=${encodeURIComponent(lon)}&accept-language=fa`;
     const r = await fetch(url, {
-      headers: { "User-Agent": "MyLeafletProxy/1.0 (mailto:you@example.com)" },
+      headers: {
+        "User-Agent": "MyLeafletProxy/1.0 (mailto:samin.mhr2004@gmial.com)",
+      },
     });
     if (!r.ok) return res.status(502).json({ error: "Upstream failed" });
     const json = await r.json();

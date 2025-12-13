@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fa">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نقشه ایران با جستجوی شهر</title>
+
+    <!-- استایل Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+
+    <!-- پلاگین نمایش موقعیت کاربر -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.css"
+    />
+
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+
+  <body>
+    <!-- بخش Search Bar -->
+    <div class="search_bar_container">
+      <div class="search_bar">
+        <div class="filter_bar">
+          <!-- استان -->
+          <div>
+            <input
+              id="provinceInput"
+              class="input_search"
+              list="counties"
+              placeholder="انتخاب استان..."
+            />
+            <datalist id="counties">
+              <option value="فارس"></option>
+              <option value="تهران"></option>
+              <option value="اصفهان"></option>
+            </datalist>
+          </div>
+
+          <!-- شهر -->
+          <div>
+            <input
+              id="cityInput"
+              class="input_search"
+              list="cities"
+              placeholder="انتخاب شهر..."
+            />
+            <datalist id="cities"></datalist>
+          </div>
+
+          <!-- دکمه سرچ -->
+          <div>
+            <button
+              id="searchButton"
+              class="input_search"
+              style="cursor: pointer"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نقشه -->
+    <div id="map"></div>
+    <div class="legend" id="legend"></div>
+
+    <!-- اسکریپت Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
+
+    <!-- اسکریپت اصلی -->
+    <script defer src="./script.js"></script>
+  </body>
+</html>
