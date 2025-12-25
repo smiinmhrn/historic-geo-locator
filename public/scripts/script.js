@@ -66,7 +66,7 @@ map.on("click", async function (e) {
       addressObj?.amenity ||
       address.split(",")[0];
 
-    console.log("Searching Wiki for:", placeName); 
+    console.log("Searching Wiki for:", placeName);
     const wiki = await wikiGeoSearch(lat, lng, placeName);
 
     const coordsHtml = `<b>مختصات:</b> ${lat.toFixed(6)}, ${lng.toFixed(
@@ -180,8 +180,7 @@ const cityInput = document.getElementById("cityInput");
 const searchButton = document.getElementById("searchButton");
 const cityDatalist = document.getElementById("cities");
 
-provinceInput.addEventListener("input", function () {
-  const province = this.value;
+function updateCityList(province) {
   cityDatalist.innerHTML = "";
   if (citiesByProvince[province]) {
     citiesByProvince[province].forEach((city) => {
@@ -190,6 +189,15 @@ provinceInput.addEventListener("input", function () {
       cityDatalist.appendChild(option);
     });
   }
+}
+
+provinceInput.addEventListener("change", function () {
+  cityInput.value = "";
+  updateCityList(this.value);
+});
+
+cityInput.addEventListener("focus", function () {
+  updateCityList(provinceInput.value);
 });
 
 searchButton.addEventListener("click", async function () {
@@ -199,6 +207,6 @@ searchButton.addEventListener("click", async function () {
     const [lat, lng] = cityCoords[city];
     map.flyTo([lat, lng], 12, { duration: 1.5 });
   } else {
-    alert("لطفا یک شهر معتبر انتخاب کنید!");
+    alert("لطفا یک شهر معتبر از لیست انتخاب کنید!");
   }
 });

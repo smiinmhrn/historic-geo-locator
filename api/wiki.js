@@ -7,24 +7,40 @@ export default async function handler(req, res) {
     };
     const base = "https://fa.wikipedia.org/w/api.php";
 
-    let pageId = null;
+    const geoUrl = `${base}?action=query&list=geosearch&gsradius=800&gscoord=${lat}%7C${lon}&gslimit=1&format=json&origin=*`;
+    const r = await fetch(geoUrl, { headers });
+    const j = await r.json();
 
-    if (name && name !== "undefined" && name !== "نامشخص") {
+    let pageId = j?.query?.geosearch?.[0]?.pageid;
+
+    if (!pageId && name && name !== "undefined") {
       const searchUrl = `${base}?action=query&list=search&srsearch=${encodeURIComponent(
         name
-      )}&format=json&origin=*`;
+      )}&srlimit=1&format=json&origin=*`;
       const sr = await fetch(searchUrl, { headers });
       const sj = await sr.json();
-      if (sj?.query?.search?.length > 0) {
-        pageId = sj.query.search[0].pageid;
-      }
-    }
 
-    if (!pageId) {
-      const geoUrl = `${base}?action=query&list=geosearch&gsradius=200&gscoord=${lat}%7C${lon}&gslimit=1&format=json&origin=*`;
-      const r = await fetch(geoUrl, { headers });
-      const j = await r.json();
-      pageId = j?.query?.geosearch?.[0]?.pageid;
+      if (sj?.query?.search?.length > 0) {
+        const tempPageId = sj.query.search[0].pageid;
+
+        const coordCheckUrl = `${base}?action=query&pageids=${tempPageId}&prop=coordinates&format=json&origin=*`;
+        const cRes = await fetch(coordCheckUrl);
+        const cJson = await cRes.json();
+        const coords = cJson.query.pages[tempPageId]?.coordinates?.[0];
+
+        if (coords) {
+          const dist = Math.sqrt(
+            Math.pow(coords.lat - lat, 2) + Math.pow(coords.lon - lon, 2)
+          );
+          if (dist < 0.1) {
+            pageId = tempPageId;
+          }
+        } else {
+          if (sj.query.search[0].title.includes(name.split(" ")[0])) {
+            pageId = tempPageId;
+          }
+        }
+      }
     }
 
     if (pageId) {

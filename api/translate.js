@@ -2,7 +2,6 @@ export default async function handler(req, res) {
   const { text } = req.body;
 
   try {
-    // فقط پاراگراف اول را برداریم
     const firstParagraph = text.split("\n\n")[0].trim();
 
     const url =
