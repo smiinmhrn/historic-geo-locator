@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>نقشه ایران با جستجوی شهر</title>
 
-    <!-- استایل Leaflet -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
     />
 
-    <!-- پلاگین نمایش موقعیت کاربر -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.css"
@@ -21,11 +19,9 @@
   </head>
 
   <body>
-    <!-- بخش Search Bar -->
     <div class="search_bar_container">
       <div class="search_bar">
         <div class="filter_bar">
-          <!-- استان -->
           <div>
             <input
               id="provinceInput"
@@ -40,7 +36,6 @@
             </datalist>
           </div>
 
-          <!-- شهر -->
           <div>
             <input
               id="cityInput"
@@ -51,7 +46,6 @@
             <datalist id="cities"></datalist>
           </div>
 
-          <!-- دکمه سرچ -->
           <div>
             <button
               id="searchButton"
@@ -65,15 +59,12 @@
       </div>
     </div>
 
-    <!-- نقشه -->
     <div id="map"></div>
     <div class="legend" id="legend"></div>
 
-    <!-- اسکریپت Leaflet -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
 
-    <!-- اسکریپت اصلی -->
     <script defer src="./script.js"></script>
   </body>
 </html>

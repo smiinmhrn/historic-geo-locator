@@ -1,32 +1,19 @@
-// ---------------------
-// تابع ترجمه خودکار انگلیسی → فارسی با LibreTranslate
-// ---------------------
-// ---------------------
-// ترجمه هوشمند: تشخیص سریع و fallback به سرور (که خودش detect میکنه)
-// ---------------------
 async function translateIfEnglish(text) {
-  // تشخیص سریع: نسبت کلمات لاتینِ قابل‌اعتنا یا تعداد حروف لاتین
   function likelyContainsEnglish(t) {
     const words = t.split(/\s+/).filter(Boolean);
     if (words.length === 0) return false;
 
-    // کلمه‌ای که حداقل 3 حرف لاتین داشته باشد
     const enWords = words.filter((w) => /[A-Za-z]{3,}/.test(w));
     const enCharCount = (t.match(/[A-Za-z]/g) || []).length;
 
-    // آستانه‌ها — تنظیم‌پذیر
-    if (enWords.length / words.length >= 0.15) return true; // نسبت کلمات انگلیسی
-    if (enCharCount > 30) return true; // یا تعداد حرف لاتین بیشتر از 30
-    // اگر تنها اسم کوتاه انگلیسی (مثل "Yazd") هست و متن فارسی هم داره، بهتره هم ترجمه بشه تا یکدستی ایجاد شود
+    if (enWords.length / words.length >= 0.15) return true;
+    if (enCharCount > 30) return true;
     return false;
   }
 
   if (!likelyContainsEnglish(text)) return text;
 
-  // اگر متن مخلوطِ فارسی-انگلیسیه، ما می‌توانیم فقط بخش‌های لاتین را برای ترجمه جدا کنیم:
-  // این بخش اختیاریه ولی در متن‌های مخلوط معمولاً نتیجه خواناتری می‌دهد.
   function splitByScript(t) {
-    // برش به قطعات: قطعات فارسی/غیرلاتین و قطعات لاتین/نشانه‌گذاری
     const parts = [];
     let cur = "";
     let curIsLatin = null;
@@ -49,10 +36,8 @@ async function translateIfEnglish(text) {
 
   const parts = splitByScript(text);
 
-  // اگر تعداد قطعات لاتین خیلی کم و کوتاهه، فقط یک‌بار کل متن رو بفرست برای سریع بودن
   const totalLatinChars = (text.match(/[A-Za-z]/g) || []).length;
   if (totalLatinChars < 50) {
-    // درخواست ساده به سرور — سرور خودش 'auto' detect میکنه (باید سرورو آپدیت کنیم)
     try {
       const response = await fetch("/api/translate", {
         method: "POST",
@@ -67,10 +52,9 @@ async function translateIfEnglish(text) {
     }
   }
 
-  // اگر متن طولانی و مخلوطه: فقط قطعات لاتین را ترجمه کن و دوباره سرِ هم کن
   const translatedParts = await Promise.all(
     parts.map(async (p) => {
-      if (!p.isLatin) return p.text; // فارسی یا غیرلاتین را دست نزن
+      if (!p.isLatin) return p.text;
       try {
         const response = await fetch("/api/translate", {
           method: "POST",
@@ -89,9 +73,6 @@ async function translateIfEnglish(text) {
   return translatedParts.join("");
 }
 
-// ---------------------
-// نقشه اصلی
-// ---------------------
 var map = L.map("map").setView([32, 53], 6);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -99,14 +80,11 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
-// ---------------------
-// پلاگین موقعیت کاربر
-// ---------------------
 let lc = L.control
   .locate({
     position: "topleft",
-    setView: false, // نقشه به طور خودکار جا نمی‌ره، درست
-    flyTo: true, // وقتی موقعیت پیدا شد، نقشه روی اون پرش کنه
+    setView: false,
+    flyTo: true,
     keepCurrentZoomLevel: false,
     drawCircle: true,
     showPopup: false,
@@ -115,7 +93,7 @@ let lc = L.control
       enableHighAccuracy: true,
       maximumAge: 0,
       timeout: 8000,
-      watch: false, // << اضافه شد: فقط یک بار موقعیت رو بگیر
+      watch: false,
     },
   })
   .addTo(map);
@@ -125,16 +103,12 @@ map.on("locationfound", function (e) {
     map.flyTo([e.latitude, e.longitude], 16, { duration: 1.2 });
     map._justZoomedToLocation = true;
 
-    // بعد از 2 ثانیه اجازه بده دوباره دکمه کار کند
     setTimeout(() => {
       map._justZoomedToLocation = false;
     }, 2000);
   }
 });
 
-// ---------------------
-// داده‌ها و fetch
-// ---------------------
 var geojsonFeatures = [{ type: "FeatureCollection", features: [] }];
 
 async function fetchData() {
@@ -165,9 +139,6 @@ async function wikiGeoSearch(lat, lon) {
   }
 }
 
-// ---------------------
-// کلیک روی نقشه و marker
-// ---------------------
 let clickMarker = null;
 
 map.on("click", async function (e) {
@@ -186,13 +157,11 @@ map.on("click", async function (e) {
 
   const coordsHtml = `<b>مختصات:</b> ${lat.toFixed(6)}, ${lng.toFixed(6)}<br/>`;
 
-  // --- Reverse Geocode ---
   const rev = await reverseGeocode(lat, lng);
   let address = rev?.display_name || "نامشخص";
   address = await translateIfEnglish(address);
   let addressHtml = `<b>نشانی:</b> ${address}<br/>`;
 
-  // --- Wikipedia ---
   const wiki = await wikiGeoSearch(lat, lng);
   let wikiHtml = "<b>اطلاعات تاریخی/ویکی:</b> موردی یافت نشد.";
 
@@ -211,9 +180,6 @@ map.on("click", async function (e) {
     .openPopup();
 });
 
-// ---------------------
-// GeoJSON و Polygon
-// ---------------------
 function getRandomColor() {
   return "#1c375" + Math.floor(Math.random() * 16).toString(16);
 }
@@ -221,30 +187,10 @@ function getRandomColor() {
 var geojsonFeatures2 = [
   {
     type: "FeatureCollection",
-    features: [
-      // {
-      //   type: "Feature",
-      //   properties: { name: "seventh point" },
-      //   geometry: {
-      //     coordinates: [51.3735946934878, 35.6401603986822],
-      //     type: "Point",
-      //   },
-      // },
-      // {
-      //   type: "Feature",
-      //   properties: { name: "eighth point" },
-      //   geometry: {
-      //     coordinates: [51.30202210653047, 35.709012093627564],
-      //     type: "Point",
-      //   },
-      // },
-    ],
+    features: [],
   },
 ];
 
-// ---------------------
-// بارگذاری لایه‌ها
-// ---------------------
 async function loadMapLayers() {
   await fetchData();
 
@@ -267,8 +213,7 @@ async function loadMapLayers() {
           geojsonLayer1.resetStyle();
         },
         click: function (e) {
-          L.DomEvent.stopPropagation(e); // جلوگیری از رویداد کلیک نقشه
-
+          L.DomEvent.stopPropagation(e);
           const bounds = layer.getBounds();
           map.flyToBounds(bounds, { padding: [20, 20], duration: 1.1 });
         },
@@ -331,9 +276,6 @@ async function loadMapLayers() {
 
 loadMapLayers();
 
-// ---------------------
-// Search Bar
-// ---------------------
 const citiesByProvince = {
   فارس: ["شیراز", "مرودشت", "کازرون"],
   تهران: ["تهران", "ری", "شهریار"],
