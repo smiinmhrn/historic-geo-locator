@@ -74,7 +74,6 @@ body {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  /* z-index: 1000; */
 }
 .legend > i {
   width: 18px;
@@ -226,7 +225,6 @@ body {
   transform: scale(1.1);
 }
 
-/* Add your custom styles for tooltips */
 .leaflet-tooltip {
   padding: 5px 10px;
   font-weight: 400;
@@ -360,4 +358,8 @@ body {
   font-family: "Vazirmatn", Tahoma, sans-serif;
   line-height: 1.9;
   word-spacing: -1px;
+}
+
+.leaflet-top.leaflet-left {
+  margin-top: 80px;
 }

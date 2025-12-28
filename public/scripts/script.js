@@ -2,13 +2,16 @@ import { translateIfEnglish, getRandomColor } from "./utils.js";
 import { fetchData, reverseGeocode, wikiGeoSearch } from "./api.js";
 import { citiesByProvince, cityCoords } from "./config.js";
 
+// 1. Map Initialization: Center the view on Iran [lat, lon] with zoom level 6
 var map = L.map("map").setView([32, 53], 6);
 
+// 2. Base Layer: Load OpenStreetMap tiles
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
+// 3. Location Control: Configure the "Show My Location" button (GPS)
 let lc = L.control
   .locate({
     position: "topleft",
@@ -27,6 +30,7 @@ let lc = L.control
   })
   .addTo(map);
 
+// Smooth transition when user's location is detected
 map.on("locationfound", function (e) {
   if (!map._justZoomedToLocation) {
     map.flyTo([e.latitude, e.longitude], 16, { duration: 1.2 });
@@ -39,64 +43,129 @@ map.on("locationfound", function (e) {
 
 let clickMarker = null;
 
+// 4. MAP CLICK EVENT: The core logic for fetching historical data
 map.on("click", async function (e) {
   const lat = e.latlng.lat;
   const lng = e.latlng.lng;
 
+  // Manage Marker: Remove previous marker and add a new one at the click location
   if (clickMarker) map.removeLayer(clickMarker);
   clickMarker = L.marker([lat, lng]).addTo(map);
   clickMarker.bindPopup("در حال بارگذاری اطلاعات...").openPopup();
 
+  // Cleanup: Remove marker from map when the popup is closed
   clickMarker.on("popupclose", function () {
     map.removeLayer(clickMarker);
     clickMarker = null;
   });
 
+  console.log(`--- [Client] شروع عملیات برای مختصات: ${lat}, ${lng} ---`);
+
   try {
+    // Step A: Fetch Address Details using Reverse Geocoding
     const rev = await reverseGeocode(lat, lng);
+    console.log("[Client] پاسخ کامل Reverse Geocode:", rev);
 
     let address = rev?.display_name || "نامشخص";
-
     const addressObj = rev?.address;
-    const placeName =
+
+    // Step B: Smart Name Extraction - Prioritize specific tags (historic, tourism, etc.)
+    let placeName =
       addressObj?.historic ||
       addressObj?.tourism ||
-      addressObj?.bridge ||
       addressObj?.monument ||
-      addressObj?.amenity ||
-      address.split(",")[0];
+      addressObj?.fort ||
+      addressObj?.castle ||
+      addressObj?.bridge ||
+      addressObj?.amenity;
 
-    console.log("Searching Wiki for:", placeName);
-    const wiki = await wikiGeoSearch(lat, lng, placeName);
+    // Fallback: If no specific tags exist, take the first part of the address string
+    if (!placeName) {
+      const firstPart = address.split(",")[0].trim();
+      const forbidden = [
+        "خیابان",
+        "کوچه",
+        "بزرگراه",
+        "منطقه",
+        "استان",
+        "شهرستان",
+        "بخش",
+      ];
 
+      // Filter out common street/area keywords to avoid searching for generic addresses on Wiki
+      const isForbidden = forbidden.some((word) => firstPart.includes(word));
+      if (!isForbidden) {
+        placeName = firstPart;
+      }
+    }
+
+    console.log(
+      `[Client] نام نهایی استخراج شده برای جستجو: "${
+        placeName || "فقط مختصات"
+      }"`
+    );
+
+    // Step C: Call Wikipedia API with coordinates and the extracted place name
+    const wiki = await wikiGeoSearch(lat, lng, placeName || "");
+    console.log("[Client] پاسخ خام دریافت شده از بک‌اِند (wiki.js):", wiki);
+
+    // Step D: Translation and Popup Content Preparation
     const coordsHtml = `<b>مختصات:</b> ${lat.toFixed(6)}, ${lng.toFixed(
       6
     )}<br/>`;
 
+    console.log("[Client] در حال ارسال آدرس برای ترجمه...");
     const translatedAddress = await translateIfEnglish(address);
     const addressHtml = `<b>نشانی:</b> ${translatedAddress}<br/>`;
 
-    let wikiHtml = "<b>اطلاعات تاریخی/ویکی:</b> موردی یافت نشد.";
-    if (wiki?.extract) {
-      let translatedExtract = await translateIfEnglish(wiki.extract);
+    let wikiHtml =
+      "<b>اطلاعات تاریخی:</b> در این نقطه مورد ثبت شده‌ای یافت نشد.";
+
+    if (wiki && (wiki.extract || wiki.title)) {
+      console.log("[Client] دیتای ویکی یافت شد. در حال ترجمه محتوای ویکی...");
+
+      // Translate the Wiki Title and Extract (Summary)
+      let translatedTitle = wiki.title
+        ? await translateIfEnglish(wiki.title)
+        : "بدون عنوان";
+      let translatedExtract = wiki.extract
+        ? await translateIfEnglish(wiki.extract)
+        : "";
+
+      console.log(`[Client] عنوان پس از ترجمه: ${translatedTitle}`);
+
+      // Character Limit: Truncate long texts for better UI
       const short =
         translatedExtract.length > 600
           ? translatedExtract.slice(0, 600) + "..."
           : translatedExtract;
 
-      const translatedTitle = await translateIfEnglish(wiki.title);
-      wikiHtml = `<b>${translatedTitle}</b><br/>${short}`;
+      wikiHtml = `<b style="color: #b52b2b;">🏛️ ${translatedTitle}</b><br/>${short}`;
+
+      if (wiki.url) {
+        wikiHtml += `<br/><a href="${wiki.url}" target="_blank" style="font-size: 11px; color: blue;">ادامه در ویکی‌پدیا</a>`;
+      }
+    } else {
+      console.warn("[Client] دیتای معتبری از ویکی دریافت نشد یا خالی بود.");
     }
 
+    // Step E: Update the Popup with combined information
     clickMarker.setPopupContent(coordsHtml + addressHtml + "<hr/>" + wikiHtml);
+    console.log("--- [Client] پایان موفقیت‌آمیز عملیات ---");
   } catch (error) {
-    console.error("Error in click handler:", error);
-    clickMarker.setPopupContent("خطا در دریافت اطلاعات.");
+    console.error("[Client] خطا در هندلر کلیک:", error);
+    clickMarker.setPopupContent(
+      "خطا در دریافت اطلاعات. لطفا دوباره تلاش کنید."
+    );
   }
 });
 
+// 5. MAP LAYERS: Loading administrative boundaries and zoom-level logic
 async function loadMapLayers() {
+  // Fetch GeoJSON for districts (Shahrestans)
   const geojsonFeatures = await fetchData();
+
+  // Layer 1: District Polygons
   var geojsonLayer1 = L.geoJSON(geojsonFeatures, {
     style: function () {
       return {
@@ -121,17 +190,20 @@ async function loadMapLayers() {
           map.flyToBounds(bounds, { padding: [20, 20], duration: 1.1 });
         },
       });
+      // Show Tooltip with city/district name on hover
       if (feature.properties?.CityName || feature.properties?.name) {
         layer.bindTooltip(
           feature.properties.CityName || feature.properties.name
         );
       }
     },
+    // Only show polygons when zoom is 8 or lower
     filter: function () {
       return map.getZoom() <= 8;
     },
   }).addTo(map);
 
+  // Layer 2: Specific Point Markers (Initial collection is empty)
   var geojsonFeatures2 = [{ type: "FeatureCollection", features: [] }];
   var points = [];
   geojsonFeatures2[0].features.forEach(function (f) {
@@ -159,6 +231,7 @@ async function loadMapLayers() {
 
   var geojsonLayer2 = L.layerGroup(points).addTo(map);
 
+  // 6. ZOOM SWITCH: Toggle layers based on zoom level for better performance/visibility
   map.on("zoomend", function () {
     if (map.getZoom() <= 8) {
       map.removeLayer(geojsonLayer2);
@@ -169,17 +242,20 @@ async function loadMapLayers() {
     }
   });
 
+  // Initial layer state check
   if (map.getZoom() >= 8) map.addLayer(geojsonLayer2);
   else map.addLayer(geojsonLayer1);
 }
 
 loadMapLayers();
 
+// 7. SEARCH UI: Province and City selection logic
 const provinceInput = document.getElementById("provinceInput");
 const cityInput = document.getElementById("cityInput");
 const searchButton = document.getElementById("searchButton");
 const cityDatalist = document.getElementById("cities");
 
+// Dynamic dropdown update for cities based on selected province
 function updateCityList(province) {
   cityDatalist.innerHTML = "";
   if (citiesByProvince[province]) {
@@ -200,8 +276,9 @@ cityInput.addEventListener("focus", function () {
   updateCityList(provinceInput.value);
 });
 
+// Navigation: Fly to the selected city coordinates
 searchButton.addEventListener("click", async function () {
-  lc.stop();
+  lc.stop(); // Stop current geolocation tracking
   const city = cityInput.value;
   if (cityCoords[city]) {
     const [lat, lng] = cityCoords[city];
