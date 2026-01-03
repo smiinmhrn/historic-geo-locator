@@ -1,6 +1,8 @@
 import { translateIfEnglish, getRandomColor } from "./utils.js";
 import { fetchData, reverseGeocode, wikiGeoSearch } from "./api.js";
 import { citiesByProvince, cityCoords } from "./config.js";
+import { specialPlaces } from "./specialPlaces.js";
+import { pointInPolygon } from "./geoUtils.js";
 
 // 1. Map Initialization: Center the view on Iran [lat, lon] with zoom level 6
 var map = L.map("map").setView([32, 53], 6);
@@ -62,6 +64,32 @@ map.on("click", async function (e) {
   console.log(`--- [Client] شروع عملیات برای مختصات: ${lat}, ${lng} ---`);
 
   try {
+    let detectedPlace = null;
+
+    for (const place of specialPlaces) {
+      const centerLat = place.polygon[0][0];
+      const centerLng = place.polygon[0][1];
+
+      const distance = map.distance(e.latlng, [centerLat, centerLng]);
+
+      console.log(
+        "[DEBUG]",
+        place.name,
+        "Distance:",
+        distance.toFixed(0),
+        "meters"
+      );
+
+      if (distance < 350) {
+        detectedPlace = place;
+        break;
+      }
+    }
+
+    if (detectedPlace) {
+      console.log("[Client] مکان خاص تشخیص داده شد:", detectedPlace.name);
+    }
+
     // Step A: Fetch Address Details using Reverse Geocoding
     const rev = await reverseGeocode(lat, lng);
     console.log("[Client] پاسخ کامل Reverse Geocode:", rev);
@@ -70,32 +98,35 @@ map.on("click", async function (e) {
     const addressObj = rev?.address;
 
     // Step B: Smart Name Extraction - Prioritize specific tags (historic, tourism, etc.)
-    let placeName =
-      addressObj?.historic ||
-      addressObj?.tourism ||
-      addressObj?.monument ||
-      addressObj?.fort ||
-      addressObj?.castle ||
-      addressObj?.bridge ||
-      addressObj?.amenity;
+    let placeName = null;
 
-    // Fallback: If no specific tags exist, take the first part of the address string
-    if (!placeName) {
-      const firstPart = address.split(",")[0].trim();
-      const forbidden = [
-        "خیابان",
-        "کوچه",
-        "بزرگراه",
-        "منطقه",
-        "استان",
-        "شهرستان",
-        "بخش",
-      ];
+    if (detectedPlace) {
+      placeName = detectedPlace.wikiName;
+    } else {
+      placeName =
+        addressObj?.historic ||
+        addressObj?.tourism ||
+        addressObj?.monument ||
+        addressObj?.fort ||
+        addressObj?.castle ||
+        addressObj?.bridge ||
+        addressObj?.amenity;
 
-      // Filter out common street/area keywords to avoid searching for generic addresses on Wiki
-      const isForbidden = forbidden.some((word) => firstPart.includes(word));
-      if (!isForbidden) {
-        placeName = firstPart;
+      if (!placeName) {
+        const firstPart = address.split(",")[0].trim();
+        const forbidden = [
+          "خیابان",
+          "کوچه",
+          "بزرگراه",
+          "منطقه",
+          "استان",
+          "شهرستان",
+          "بخش",
+        ];
+
+        if (!forbidden.some((w) => firstPart.includes(w))) {
+          placeName = firstPart;
+        }
       }
     }
 
